@@ -7,7 +7,9 @@ import android.graphics.drawable.Drawable;
 import android.support.v4.graphics.ColorUtils;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import java.util.Locale;
 import java.util.Random;
 
 public class IntentLogEntry {
@@ -60,11 +62,29 @@ public class IntentLogEntry {
         ((View) blankLogEntry.findViewById(R.id.border3)).setBackgroundColor(colorScheme[COLOR_HIGHLIGHT].toArgb());
         ((View) blankLogEntry.findViewById(R.id.border4)).setBackgroundColor(colorScheme[COLOR_HIGHLIGHT].toArgb());
 
+        TextView upperTitle = (TextView) blankLogEntry.findViewById(R.id.upperTitle);
+        upperTitle.setBackgroundColor(colorScheme[COLOR_TITLE].toArgb());
+        upperTitle.setCompoundDrawables(logEntryIcon, null, null, null);
+        String topMsg = String.format(Locale.ENGLISH, "#%08x -- %s -- %s", intentLog.getLongExtra("UniqueLogID", 0L),
+                intentLog.getStringExtra("Timestamp"), intentLog.getStringExtra("LogSeverity"));
+        upperTitle.setText(topMsg);
+
+        TextView lowerTitle = (TextView) blankLogEntry.findViewById(R.id.lowerTitle);
+        lowerTitle.setBackgroundColor(colorScheme[COLOR_TITLE].toArgb());
+        lowerTitle.setText(intentLog.getStringExtra("SourceCodeRefs"));
+
+        TextView msgDataField = (TextView) blankLogEntry.findViewById(R.id.textContent);
+        msgDataField.setBackgroundColor(colorScheme[COLOR_BASE].toArgb());
+        msgDataField.setText(String.join("\n", intentLog.getStringArrayExtra("MessageData")));
 
         return blankLogEntry;
 
     }
 
-
+    public static void postNewIntentLog(Intent intentLog) {
+        LinearLayout ilogLayout = getLogEntryInstance(intentLog);
+        ((LinearLayout) DemoActivity.localInst.findViewById(R.id.loggingParentView)).addView(ilogLayout);
+        // TODO: later, can add in code to scroll to the bottom of the window as the new logs are added.
+    }
 
 }

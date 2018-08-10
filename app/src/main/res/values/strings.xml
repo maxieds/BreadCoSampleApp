@@ -1,3 +1,37 @@
 <resources>
     <string name="app_name">SampleApp</string>
+
+    <string-array name="slotNumbers">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
+    <integer-array name="sampleCardDumpFiles">
+        <item>@raw/carddump_mifare_sample_v1</item>
+        <item>@raw/carddump_mifare_sample_v2</item>
+        <item>@raw/carddump_mifare_sample_v3</item>
+        <item>@raw/mfc1k_random_content_fixed_keys</item>
+        <item>@raw/mfc4k_random_content_fixed_keys</item>
+        <item>@raw/mifare_classic_1k</item>
+        <item>@raw/mifare_ultralight</item>
+    </integer-array>
+
+    <string-array name="sampleCardDumpConfigTypes">
+        <item>MF_CLASSIC_1K</item>
+        <item>MF_CLASSIC_1K</item>
+        <item>MF_CLASSIC_1K</item>
+        <item>MF_CLASSIC_1K</item>
+        <item>MF_CLASSIC_4K</item>
+        <item>MF_CLASSIC_1K</item>
+        <item>MF_ULTRALIGHT</item>
+    </string-array>
+
+
+
 </resources>

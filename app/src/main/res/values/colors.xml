@@ -5,6 +5,8 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorAccentLog">#729FCF</color>
+    <color name="colorAccentHighlight">#B9D0E9</color>
     <color name="actionBarTextColor">#EBEBEB</color>
 
     <color name="rainbow1">#f46528</color>
