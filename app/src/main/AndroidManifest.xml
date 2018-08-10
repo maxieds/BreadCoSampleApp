@@ -46,6 +46,8 @@
                 android:resource="@xml/chameleon_usb_device_filter"/>
 
         </activity>
+
     </application>
+
 
 </manifest>

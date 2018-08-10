@@ -1,10 +1,16 @@
 package com.maxieds.sampleapp;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.hardware.usb.UsbManager;
+import android.support.annotation.RequiresPermission;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -18,6 +24,8 @@ import android.widget.Toolbar;
 
 import com.maxieds.chameleonminiusb.ChameleonDeviceConfig;
 import com.maxieds.chameleonminiusb.LibraryLogging;
+import com.maxieds.chameleonminiusb.Utils;
+import com.maxieds.chameleonminiusb.ChameleonLibraryLoggingReceiver;
 
 import java.io.InputStream;
 
@@ -31,10 +39,8 @@ import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTyp
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.getChameleonMiniUSBDeviceParams;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.sendCommandToChameleon;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO;
-import static com.maxieds.chameleonminiusb.LibraryLogging.getChameleonNotifyFilter;
-import static com.maxieds.sampleapp.IntentLogEntry.postNewIntentLog;
 
-public class DemoActivity extends AppCompatActivity {
+public class DemoActivity extends AppCompatActivity implements ChameleonLibraryLoggingReceiver {
 
     private static final String TAG = DemoActivity.class.getSimpleName();
 
@@ -67,6 +73,10 @@ public class DemoActivity extends AppCompatActivity {
         } catch(Exception nfe) {}
     }
 
+    public void onReceiveNewLoggingData(Intent intentLog) {
+        IntentLogEntry.postNewIntentLog(intentLog);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -94,15 +104,34 @@ public class DemoActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR); // keep app from crashing when the screen rotates
 
-        // setup the intent filters packaged convenently by the library:
-        IntentFilter chameleonNotifyFilters = getChameleonNotifyFilter(true);
-        BroadcastReceiver chameleonNotifyBCastRecv = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                onNewIntent(intent);
-            }
+        // setup and request necessary permissions (ESPECIALLY USB):
+        String[] permissions = {
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE",
+                "android.permission.INTERNET",
+                "com.android.example.USB_PERMISSION",
         };
-        registerReceiver(chameleonNotifyBCastRecv, chameleonNotifyFilters);
+        if (android.os.Build.VERSION.SDK_INT >= 23)
+            requestPermissions(permissions, 200);
+        else
+            ActivityCompat.requestPermissions(this, permissions, 200);
+
+        // now setup the basic serial port so that we can accept attached USB device connections:
+        if(!ChameleonDeviceConfig.usbReceiversRegistered) {
+            BroadcastReceiver usbActionReceiver = new BroadcastReceiver() {
+                @RequiresPermission("com.android.example.USB_PERMISSION")
+                public void onReceive(Context context, Intent intent) {
+                    if (intent.getAction() != null && (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED) || intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED))) {
+                        onNewIntent(intent);
+                    }
+                }
+            };
+            IntentFilter usbActionFilter = new IntentFilter();
+            usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+            usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            registerReceiver(usbActionReceiver, usbActionFilter);
+            ChameleonDeviceConfig.usbReceiversRegistered = true;
+        }
 
         // initialize the Chameleon USB library so it gets up and a' chugging:
         (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE);
@@ -116,34 +145,31 @@ public class DemoActivity extends AppCompatActivity {
         if(intentAction == null) {
             return;
         }
-        boolean displayAlertDialog = false;
-        if(intentAction.equals("CHAMELEON_REVG_ATTACHED")) {
-            displayAlertDialog = true;
+        if(intentAction.equals("ACTION_USB_DEVICE_ATTACHED")) {
+            ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
+            Utils.sleepThreadMillisecond(1000);
+            if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
+                return;
+            }
             disableStatusIcon(R.id.statusIconNoUSB);
             enableStatusIcon(R.id.statusIconUSB, R.drawable.usbconnected16);
-            enableStatusIcon(R.id.statusIconRevG, R.drawable.revgboard24);
+            if(ChameleonDeviceConfig.isRevisionEDevice()) {
+                enableStatusIcon(R.id.statusIconRevE, R.drawable.reveboard24);
+                disableStatusIcon(R.id.statusIconRevG);
+            }
+            else {
+                enableStatusIcon(R.id.statusIconRevG, R.drawable.revgboard24);
+                disableStatusIcon(R.id.statusIconRevE);
+            }
             updateDemoWindowStatusBar();
         }
-        else if(intentAction.equals("CHAMELEON_REVE_ATTACHED")) {
-            displayAlertDialog = true;
-            disableStatusIcon(R.id.statusIconNoUSB);
-            enableStatusIcon(R.id.statusIconUSB, R.drawable.usbconnected16);
-            enableStatusIcon(R.id.statusIconRevE, R.drawable.reveboard24);
-            updateDemoWindowStatusBar();
-        }
-        else if(intentAction.equals("CHAMELEON_DETACHED")) {
-            displayAlertDialog = true;
-            enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
+        else if(intentAction.equals("ACTION_USB_DEVICE_DETACHED")) {
+            ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
             disableStatusIcon(R.id.statusIconUSB);
+            enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
             disableStatusIcon(R.id.statusIconRevE);
             disableStatusIcon(R.id.statusIconRevG);
             updateDemoWindowStatusBar();
-        }
-        else if(intentAction.substring(0, 3).equalsIgnoreCase("LOG")) {
-            postNewIntentLog(intent);
-        }
-        if(displayAlertDialog) {
-            // TODO
         }
 
     }

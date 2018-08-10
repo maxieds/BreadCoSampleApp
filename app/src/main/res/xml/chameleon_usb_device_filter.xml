@@ -15,9 +15,9 @@
 <resources>
 
     <!-- ChameleonMini Rev. G Board Firmware Device Specs -->
-    <usb-device vendor-id="5840" product-id="1202" class="255" />
+    <usb-device vendor-id="5840" product-id="1202" />
 
     <!-- ChameleonMini Rev. E (Rebooted) Board Firmware Device Specs -->
-    <usb-device vendor-id="1003" product-id="8260" class="255" />
+    <usb-device vendor-id="1003" product-id="8260" />
 
 </resources>
