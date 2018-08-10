@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <array name="loggingBoxHighlightColors">
+        <item>@color/rainbow1</item>
+        <item>@color/rainbow2</item>
+        <item>@color/rainbow3</item>
+        <item>@color/rainbow4</item>
+        <item>@color/rainbow5</item>
+        <item>@color/rainbow6</item>
+        <item>@color/rainbow7</item>
+        <item>@color/rainbow8</item>
+        <item>@color/rainbow9</item>
+        <item>@color/rainbow10</item>
+        <item>@color/rainbow11</item>
+        <item>@color/rainbow12</item>
+        <item>@color/rainbow13</item>
+    </array>
+
+</resources>

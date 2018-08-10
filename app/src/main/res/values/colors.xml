@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="actionBarTextColor">#EBEBEB</color>
+
+    <color name="rainbow1">#f46528</color>
+    <color name="rainbow2">#ff5ba5</color>
+    <color name="rainbow3">#ffca2b</color>
+    <color name="rainbow4">#f4ed6e</color>
+    <color name="rainbow5">#d3ac26</color>
+    <color name="rainbow6">#3bc6b6</color>
+    <color name="rainbow7">#a3c6c4</color>
+    <color name="rainbow8">#637a89</color>
+    <color name="rainbow9">#a0d3f9</color>
+    <color name="rainbow10">#c2b4d6</color>
+    <color name="rainbow11">#b07cda</color>
+    <color name="rainbow12">#9f4298</color>
+    <color name="rainbow13">#fffee6</color>
+
+</resources>

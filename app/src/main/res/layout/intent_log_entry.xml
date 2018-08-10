@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+
+    <View
+        android:id="@+id/border1"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@color/colorPrimaryDark" />
+
+    <TextView
+        android:id="@+id/upperTitle"
+        android:layout_width="fill_parent"
+        android:layout_height="20dp"
+        android:paddingRight="10dp"
+        android:textColor="@color/actionBarTextColor"
+        android:textSize="12sp"
+        android:singleLine="true"
+        android:textStyle="normal|bold" />
+
+    <View
+        android:id="@+id/border2"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/colorPrimaryDark" />
+
+    <TextView
+        android:id="@+id/lowerTitle"
+        android:layout_width="fill_parent"
+        android:layout_height="17dp"
+        android:paddingRight="10dp"
+        android:textColor="@color/actionBarTextColor"
+        android:textSize="10sp"
+        android:singleLine="true"
+        android:textStyle="normal|bold" />
+
+    <View
+        android:id="@+id/border3"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/colorPrimaryDark" />
+
+    <TextView
+        android:id="@+id/textContent"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="10dp"
+        android:textColor="@color/actionBarTextColor"
+        android:textSize="7sp"
+        android:singleLine="false"
+        android:typeface="monospace"
+        android:textStyle="normal|bold" />
+
+    <View
+        android:id="@+id/border4"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@color/colorPrimaryDark" />
+
+</LinearLayout>

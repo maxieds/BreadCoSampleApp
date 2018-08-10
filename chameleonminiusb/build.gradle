@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+def getBuildDateTimeStamp() {
+    DateFormat df = new SimpleDateFormat("YYYY-MM-DD-HH:mm:ss");
+    return new String("BuildTime=" + df.format(new Date()).toString());
+}
+
+android {
+
+    group = 'com.maxieds.chameleonminiusb'
+    version = project.DEFAULT_VERSION
+
+    compileOptions {
+        compileSdkVersion 27
+        encoding "UTF-8"
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 27
+        versionCode 1
+        versionName "v1.0.0"
+        archivesBaseName = "ChameleonUSBSupportLibrary-" + versionName + "(" + versionCode + ")"
+        buildConfigField "String", "BUILD_TIMESTAMP", "\"" + getBuildDateTimeStamp() + "\""
+        buildConfigField "String", "FULL_LIBRARY_NAME", "\"" + getBuildDateTimeStamp() + "\""
+    }
+
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:support-compat:28.0.0-alpha1'
+    implementation 'com.android.support:support-annotations:24.2.0'
+    implementation 'org.apache.commons:commons-lang3:3.4'
+    implementation 'com.github.felHR85:UsbSerial:4.5.2'
+}
+
+apply plugin: 'maven'
+repositories {
+    maven { url "https://maven.google.com" }
+    maven { url "https://jitpack.io" }
+}
