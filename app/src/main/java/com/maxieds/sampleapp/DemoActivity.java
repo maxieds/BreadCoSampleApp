@@ -200,7 +200,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
 
         // initialize the Chameleon USB library so it gets up and a' chugging:
-        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE);
+        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_ERROR);
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
             LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
