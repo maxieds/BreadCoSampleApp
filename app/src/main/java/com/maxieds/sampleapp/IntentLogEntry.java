@@ -110,11 +110,15 @@ public class IntentLogEntry {
     }
 
     public static void postNewIntentLog(Intent intentLog) {
-        LinearLayout ilogLayout = getLogEntryInstance(intentLog);
-        LinearLayout loggingParentView = (LinearLayout) DemoActivity.localInst.findViewById(R.id.loggingParentView);
-        loggingParentView.addView(ilogLayout);
-        loggingParentView.getChildAt(loggingParentView.getChildCount() - 1).setVisibility(View.VISIBLE);
-        // TODO: later, can add in code to scroll to the bottom of the window as the new logs are added.
+        final LinearLayout ilogLayout = getLogEntryInstance(intentLog);
+        DemoActivity.localInst.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                LinearLayout loggingParentView = (LinearLayout) DemoActivity.localInst.findViewById(R.id.loggingParentView);
+                loggingParentView.addView(ilogLayout);
+                loggingParentView.getChildAt(loggingParentView.getChildCount() - 1).setVisibility(View.VISIBLE);
+            }
+        });
     }
 
 }

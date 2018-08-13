@@ -30,6 +30,7 @@ import com.maxieds.chameleonminiusb.ChameleonDeviceConfig;
 import com.maxieds.chameleonminiusb.LibraryLogging;
 import com.maxieds.chameleonminiusb.Utils;
 import com.maxieds.chameleonminiusb.ChameleonLibraryLoggingReceiver;
+import com.maxieds.chameleonminiusb.XModem;
 
 import java.io.InputStream;
 
@@ -200,7 +201,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
 
         // initialize the Chameleon USB library so it gets up and a' chugging:
-        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_ERROR);
+        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO);
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
             LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
@@ -253,6 +254,22 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.i(TAG, "Card Image \"" + dumpImageRawFilename + "\" of size " + dumpIStream.available() + "B ready for upload.");
         } catch(Exception ioe) {}
         ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
+        while(!XModem.EOT) {
+            try {
+                Thread.sleep(50);
+            } catch(InterruptedException ie) {
+                break;
+            }
+        }
+        try {
+            Thread.sleep(750);
+        } catch(InterruptedException ie) {}
+        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.verifyChameleonUpload(dumpIStream)) {
+            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
+        }
+        else {
+            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
+        }
     }
 
     public void actionButtonWriteLogs(View button) {
