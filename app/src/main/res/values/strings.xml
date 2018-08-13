@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">SampleApp</string>
+    <string name="app_name">Bread Company Sample App</string>
+    <string name="app_desc">A functional demo of the ChameleonMiniUSB library.</string>
 
     <string-array name="slotNumbers">
         <item>1</item>
@@ -30,6 +31,16 @@
         <item>MF_CLASSIC_4K</item>
         <item>MF_CLASSIC_1K</item>
         <item>MF_ULTRALIGHT</item>
+    </string-array>
+
+    <string-array name="loggingLevels">
+        <item>--Logging Level--</item>
+        <item>OFF</item>
+        <item>INFO</item>
+        <item>WARN</item>
+        <item>ERROR</item>
+        <item>DEBUG</item>
+        <item>VERBOSE</item>
     </string-array>
 
 

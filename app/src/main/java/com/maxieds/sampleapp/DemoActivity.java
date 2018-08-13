@@ -1,6 +1,9 @@
 package com.maxieds.sampleapp;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,15 +12,19 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.usb.UsbManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -46,12 +53,20 @@ import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTyp
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.getChameleonMiniUSBDeviceParams;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.sendCommandToChameleon;
+import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_DEBUG;
+import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_ERROR;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO;
+import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_OFF;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE;
+import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_WARN;
 
 public class DemoActivity extends AppCompatActivity implements ChameleonLibraryLoggingReceiver {
 
     private static final String TAG = DemoActivity.class.getSimpleName();
+
+    public static final String PACKAGE_NOTIFY_CHANNRLID = "com.maxieda.sampleapp:Channel_01";
+    public static final int DEMO_ACTIVITY_NOTIFY_ID = 1;
+    public static final int CHAMELEON_UPLOAD_NOTIFY_ID = 2;
 
     public static DemoActivity localInst;
 
@@ -133,6 +148,40 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
     }
 
+    private boolean postSystemNotificationIcon(int notifyID, String notifyName, int drawableResID, String notifyAppDesc) {
+
+        NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if(notifyManager == null) {
+            return false;
+        }
+
+        NotificationChannel notifyChannel = new NotificationChannel(PACKAGE_NOTIFY_CHANNRLID, notifyName, NotificationManager.IMPORTANCE_LOW);
+        notifyChannel.setDescription(notifyAppDesc);
+        notifyChannel.enableLights(true);
+        notifyChannel.setLightColor(Color.GREEN);
+        notifyChannel.enableVibration(true);
+        notifyChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+        notifyManager.createNotificationChannel(notifyChannel);
+
+        Notification notifyIcon = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(drawableResID)
+                .setContentTitle(notifyName)
+                .setContentText(notifyAppDesc)
+                .setOngoing(false)
+                .setChannelId(PACKAGE_NOTIFY_CHANNRLID)
+                .build();
+        notifyManager.notify(notifyID, notifyIcon);
+        return true;
+
+    }
+
+    private void removeSystemNotificationIcon(int notifyID) {
+        NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if(notifyManager != null) {
+            notifyManager.cancel(notifyID);
+        }
+    }
+
     public static Runnable updateStatusBarRunnable = new Runnable() {
         public void run() {
             DemoActivity.localInst.updateDemoWindowStatusBar();
@@ -149,6 +198,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             final Intent intent = getIntent();
             final String intentAction = intent.getAction();
             if (intentAction != null && (intentAction.equals(UsbManager.ACTION_USB_DEVICE_DETACHED) || intentAction.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED))) {
+                //localInst.sendBroadcast(intent);
                 finish();
                 return;
             }
@@ -160,6 +210,8 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         Toolbar actionBar = (Toolbar) findViewById(R.id.toolbarActionBar);
         actionBar.setTitleTextColor(getResources().getColor(R.color.actionBarTextColor));
         actionBar.setTitle("Chameleon USB Interface Library");
+        actionBar.setSubtitleTextColor(getResources().getColor(R.color.actionBarTextColor));
+        actionBar.setSubtitle("Bread Company Demo Application v" + BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")");
         actionBar.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         actionBar.setLogo(getResources().getDrawable(R.drawable.chameleonusb64));
         actionBar.setBackground(getResources().getDrawable(R.drawable.status_bar_gradient));
@@ -170,10 +222,12 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         disableStatusIcon(R.id.statusIconUSB);
         disableStatusIcon(R.id.statusIconRevE);
         disableStatusIcon(R.id.statusIconRevG);
+        disableStatusIcon(R.id.statusIconCardDumpUpload);
 
         // configure misc settings for the running sample app:
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR); // keep app from crashing when the screen rotates
+        configureLoggingSpinner();
 
         // setup and request necessary permissions (ESPECIALLY USB):
         String[] permissions = {
@@ -197,6 +251,8 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             IntentFilter usbActionFilter = new IntentFilter();
             usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
             usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            usbActionFilter.addAction("CHAMELEON_UPLOAD_SUCCESS");
+            usbActionFilter.addAction("CHAMELEON_UPLOAD_FAILURE");
             registerReceiver(usbActionReceiver, usbActionFilter);
         }
 
@@ -210,6 +266,10 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
         }
         updateStatusBarHandler.postDelayed(updateStatusBarRunnable, 25);
+
+        // place a chameleon icon in the system (notifications) tray while the app is running:
+        postSystemNotificationIcon(DEMO_ACTIVITY_NOTIFY_ID, "DEMO ACTIVITY",
+                R.drawable.chameleonnotifyicon32, getString(R.string.app_name) + ": " + getString(R.string.app_desc));
 
     }
 
@@ -230,7 +290,47 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             Utils.sleepThreadMillisecond(1250);
             updateDemoWindowStatusBar();
         }
+        else if(intentAction.equals("CHAMELEON_UPLOAD_SUCCESS")) {}
+        else if(intentAction.equals("CHAMELEON_UPLOAD_FAILURE")) {}
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (isFinishing()) {
+            removeSystemNotificationIcon(DEMO_ACTIVITY_NOTIFY_ID);
+            ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUSBInterfaceShutdown();
+        }
+    }
+
+    private void configureLoggingSpinner() {
+        final String[] spinnerList = getResources().getStringArray(R.array.loggingLevels);
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, spinnerList);
+        Spinner loggingSpinner = (Spinner) findViewById(R.id.loggingLevelSpinner);
+        loggingSpinner.setAdapter(spinnerAdapter);
+        loggingSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            String[] localSpinnerList = spinnerList;
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String setCmd = localSpinnerList[i];
+                if (setCmd.charAt(0) == '-') {
+                    return;
+                }
+                LibraryLogging.LocalLoggingLevel libraryLoggingLevel = LibraryLogging.localLoggingLevel;
+                if (setCmd.equals("OFF")) libraryLoggingLevel = LOG_ADB_OFF;
+                else if (setCmd.equals("INFO")) libraryLoggingLevel = LOG_ADB_INFO;
+                else if (setCmd.equals("WARN")) libraryLoggingLevel = LOG_ADB_WARN;
+                else if (setCmd.equals("ERROR")) libraryLoggingLevel = LOG_ADB_ERROR;
+                else if (setCmd.equals("DEBUG")) libraryLoggingLevel = LOG_ADB_DEBUG;
+                else if (setCmd.equals("VERBOSE")) libraryLoggingLevel = LOG_ADB_VERBOSE;
+                LibraryLogging.localLoggingLevel = libraryLoggingLevel;
+                LibraryLogging.i(TAG, "Logging level set to " + libraryLoggingLevel.name() + ".");
+                //((Spinner) DemoActivity.localInst.findViewById(R.id.loggingLevelSpinner)).setSelection(0);
+            }
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                return;
+            }
+        });
     }
 
     public void actionButtonUploadCardDump(View button) {
@@ -239,6 +339,11 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.i(TAG, "Cannot upload a binary dump without a valid device present!");
             return;
         }
+
+        // set a notification icon indicating that an upload is in progress:
+        //postSystemNotificationIcon(CHAMELEON_UPLOAD_NOTIFY_ID, "CHAMELEON UPLOAD",
+        //        R.drawable.uploadnotifyicon, "Chameleon card dump upload in progress ... ");
+        enableStatusIcon(R.id.statusIconCardDumpUpload, R.drawable.uploadstatusicon16);
 
         // upload the image:
         Spinner dumpImageSpinner = (Spinner) findViewById(R.id.dumpImageSpinner);
@@ -249,27 +354,42 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         int nextSlotPosition = ((Spinner) findViewById(R.id.slotNumberSpinner)).getSelectedItemPosition();
         ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.prepareChameleonEmulationSlot(nextSlotPosition, true);
         sendCommandToChameleon(SET_CONFIG, dumpImageFormat);
-        InputStream dumpIStream = getResources().openRawResource(getResources().getIdentifier(dumpImageRawFilename, "raw", getPackageName()));
+        final InputStream dumpIStream = getResources().openRawResource(getResources().getIdentifier(dumpImageRawFilename, "raw", getPackageName()));
         try {
             LibraryLogging.i(TAG, "Card Image \"" + dumpImageRawFilename + "\" of size " + dumpIStream.available() + "B ready for upload.");
         } catch(Exception ioe) {}
-        ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
-        while(!XModem.EOT) {
-            try {
-                Thread.sleep(50);
-            } catch(InterruptedException ie) {
-                break;
+
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
+                while(!XModem.EOT) {
+                    try {
+                        Thread.sleep(50);
+                    } catch(InterruptedException ie) {
+                        break;
+                    }
+                }
+                try {
+                    Thread.sleep(1250);
+                } catch(InterruptedException ie) {}
+                DemoActivity.localInst.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.verifyChameleonUpload(dumpIStream)) {
+                            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
+                            sendBroadcast(new Intent("CHAMELEON_UPLOAD_SUCCESS"));
+                        } else {
+                            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
+                            sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
+                        }
+                        //removeSystemNotificationIcon(CHAMELEON_UPLOAD_NOTIFY_ID);
+                        disableStatusIcon(R.id.statusIconCardDumpUpload);
+                    }
+                });
             }
-        }
-        try {
-            Thread.sleep(750);
-        } catch(InterruptedException ie) {}
-        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.verifyChameleonUpload(dumpIStream)) {
-            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
-        }
-        else {
-            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
-        }
+        });
+
     }
 
     public void actionButtonWriteLogs(View button) {
@@ -282,12 +402,19 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         ((LinearLayout) findViewById(R.id.loggingParentView)).removeAllViewsInLayout();
     }
 
+    public void actionButtonInitUSB(View button) {
+        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
+            LibraryLogging.i(TAG, "The chameleon device is connected! :)");
+            LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
+        }
+        else {
+            LibraryLogging.i(TAG, "Unable to initialize the Chameleon Mini device. :(");
+        }
+        updateDemoWindowStatusBar();
+    }
+
     public void actionButtonStopLibrary(View button) {
         ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUSBInterfaceShutdown();
-        enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
-        disableStatusIcon(R.id.statusIconUSB);
-        disableStatusIcon(R.id.statusIconRevE);
-        disableStatusIcon(R.id.statusIconRevG);
         updateDemoWindowStatusBar();
     }
 

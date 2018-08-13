@@ -38,19 +38,19 @@ public class IntentLogEntry {
 
     private static int loggingTextBoxColorIdx = 0;
     private static int[] loggingTextBoxColors = new int[] {
-            R.color.rainbow1,
-            R.color.rainbow2,
-            R.color.rainbow3,
-            R.color.rainbow4,
-            R.color.rainbow5,
+            //R.color.rainbow1,
+            //R.color.rainbow2,
+            //R.color.rainbow3,
+            //R.color.rainbow4,
+            //R.color.rainbow5,
             R.color.rainbow6,
             R.color.rainbow7,
             R.color.rainbow8,
             R.color.rainbow9,
-            R.color.rainbow10,
-            R.color.rainbow11,
-            R.color.rainbow12,
-            R.color.rainbow13,
+            //R.color.rainbow10,
+            //R.color.rainbow11,
+            //R.color.rainbow12,
+            //R.color.rainbow13,
     };
 
     public static int[] getNextLoggingColorSet() {

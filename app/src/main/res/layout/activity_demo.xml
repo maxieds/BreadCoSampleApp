@@ -14,7 +14,9 @@
         android:id="@+id/toolbarActionBar"
         style="Base.Theme.AppCompat.Light.DarkActionBar"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:subtitleTextAppearance="@style/Base.TextAppearance.AppCompat.Small"
+        android:titleTextAppearance="@style/TextAppearance.AppCompat.Large"/>
 
     <View
         android:layout_width="match_parent"
@@ -36,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="2dp"
             android:layout_marginLeft="1dp"
-            android:columnCount="6"
+            android:columnCount="7"
             android:paddingLeft="0dp"
             android:layout_gravity="center_vertical|left"
             android:rowCount="1">
@@ -86,6 +88,14 @@
                 android:paddingRight="2dp"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/revgboard24" />
+
+            <ImageView
+                android:id="@+id/statusIconCardDumpUpload"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/uploadstatusicon16" />
 
         </GridLayout>
 
@@ -178,7 +188,7 @@
         android:layout_weight="1"
         android:padding="0dp"
         android:layout_margin="0dp"
-        android:background="@color/colorPrimaryDark">
+        android:background="@drawable/logging_console_gradient">
 
         <LinearLayout
             android:id="@+id/loggingParentView"
@@ -186,7 +196,7 @@
             android:layout_height="fill_parent"
             android:orientation="vertical"
             android:padding="2dp"
-            android:background="@drawable/logging_console_gradient"/>
+            android:background="@android:color/transparent"/>
 
     </ScrollView>
 
@@ -202,7 +212,7 @@
         android:drawableLeft="@drawable/uploadingested24"
         android:drawablePadding="5dp"
         android:singleLine="true"
-        android:text="Upload Ingested Dumps: "
+        android:text="LIBRARY / CONFIGURATION: "
         android:textColor="@color/actionBarTextColor"
         android:textAllCaps="true"
         android:textStyle="bold|italic" />
@@ -230,8 +240,9 @@
                 android:layout_height="wrap_content"
                 android:drawablePadding="5dp"
                 android:paddingLeft="8dp"
-                android:paddingRight="12dp"
+                android:paddingRight="0dp"
                 android:singleLine="true"
+                android:layout_gravity="center_vertical"
                 android:text="Slot #: "
                 android:textAllCaps="true"
                 android:textStyle="bold|italic" />
@@ -241,18 +252,37 @@
                 android:layout_width="wrap_content"
                 android:layout_height="30dp"
                 android:entries="@array/slotNumbers"
-                android:gravity="right|center_vertical"
+                android:layout_gravity="left|center_vertical"
                 android:popupBackground="@color/colorAccentHighlight"
-                android:spinnerMode="dialog" />
+                android:spinnerMode="dropdown" />
 
-            <Button
-                style="@style/GridButtons"
-                android:background="@android:color/transparent"
-                android:drawableLeft="@drawable/binaryfile2"
-                android:onClick="actionButtonUploadCardDump"
-                android:layout_gravity="center_horizontal|right"
-                android:layout_marginRight="25dp"
-                android:text="UPLOAD TAG" />
+            <LinearLayout
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_vertical|center_horizontal|center"
+                android:orientation="horizontal">
+
+                <Button
+                    style="@style/GridButtons"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal|right"
+                    android:layout_marginRight="0dp"
+                    android:background="@android:color/transparent"
+                    android:drawableLeft="@drawable/binaryfile2"
+                    android:onClick="actionButtonUploadCardDump"
+                    android:text="UPLOAD TAG" />
+
+                <Spinner
+                    android:id="@+id/loggingLevelSpinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:layout_marginLeft="1dp"
+                    android:entries="@array/loggingLevels"
+                    android:layout_gravity="left|center_vertical"
+                    android:popupBackground="@color/colorAccentHighlight"
+                    android:spinnerMode="dropdown" />
+
+            </LinearLayout>
 
         </GridLayout>
 
@@ -270,12 +300,13 @@
                 android:paddingLeft="8dp"
                 android:drawablePadding="5dp"
                 android:singleLine="true"
-                android:text="TAG Dump: "
+                android:layout_gravity="center_vertical"
+                android:text="BIN Dump: "
                 android:textAllCaps="true"
                 android:textStyle="bold|italic" />
 
             <View
-                android:layout_width="2dp"
+                android:layout_width="0dp"
                 android:layout_height="2dp"
                 android:background="@color/colorAccentLog" />
 
@@ -284,9 +315,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="30dp"
                 android:entries="@array/sampleCardDumpFiles"
-                android:gravity="right|center_vertical"
+                android:layout_gravity="left|center_vertical"
                 android:popupBackground="@color/colorAccentHighlight"
-                android:spinnerMode="dialog" />
+                android:spinnerMode="dropdown" />
 
         </GridLayout>
 
@@ -322,6 +353,24 @@
 
         <Button
             style="@style/GridButtons"
+            android:drawableLeft="@drawable/initusb24"
+            android:onClick="actionButtonInitUSB"
+            android:text="INIT USB" />
+
+        <Button
+            style="@style/GridButtons"
+            android:drawableLeft="@drawable/querydevice24"
+            android:onClick="actionButtonQueryDevice"
+            android:text="Query Device" />
+
+        <Button
+            style="@style/GridButtons"
+            android:drawableLeft="@drawable/stoplib24l"
+            android:onClick="actionButtonStopLibrary"
+            android:text="Stop Library" />
+
+        <Button
+            style="@style/GridButtons"
             android:drawableLeft="@drawable/xmlfile24"
             android:onClick="actionButtonWriteLogs"
             android:text="Write Logs" />
@@ -334,15 +383,9 @@
 
         <Button
             style="@style/GridButtons"
-            android:drawableLeft="@drawable/stoplib24l"
-            android:onClick="actionButtonStopLibrary"
-            android:text="Stop Library" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/querydevice24"
-            android:onClick="actionButtonQueryDevice"
-            android:text="Query Device" />
+            android:drawableLeft="@drawable/lock24"
+            android:onClick="actionButtonSetReadonly"
+            android:text="Set Readonly" />
 
         <Button
             style="@style/GridButtons"
@@ -355,12 +398,6 @@
             android:drawableLeft="@drawable/user24v2"
             android:onClick="actionButtonIncrementUID"
             android:text="UID+1" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/lock24"
-            android:onClick="actionButtonSetReadonly"
-            android:text="Set Readonly" />
 
         <Button
             style="@style/GridButtons"
@@ -385,14 +422,6 @@
             android:drawableLeft="@drawable/chip24v3"
             android:onClick="actionButtonSetConfiguration"
             android:text="MFC4K" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/chip24v4"
-            android:onClick="actionButtonSetConfiguration"
-            android:text="MFC4K7B" />
-
-
 
     </GridLayout>
 

@@ -19,6 +19,4 @@ in that way.
 
 ## Screenshots
 
-<img src="https://github.com/maxieds/BreadCoSampleApp/blob/master/screenshots/Screenshot_20180813-001628.png" width="300" />
-
-<img src="https://github.com/maxieds/BreadCoSampleApp/blob/master/screenshots/Screenshot_20180813-051343.png" width="300" />
+<img src="https://github.com/maxieds/BreadCoSampleApp/blob/master/screenshots/Screenshot_20180813-115019.png" width="300" />
