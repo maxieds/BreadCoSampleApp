@@ -9,6 +9,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.usb.UsbManager;
+import android.os.Handler;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -20,6 +21,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toolbar;
@@ -34,11 +36,13 @@ import java.io.InputStream;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.NODATA;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_ACTIVE_SLOT;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_MEMORY_SIZE;
+import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_UID_SIZE;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_CONFIG;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_UID;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.SET_CONFIG;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTypeSpec_t.INCREMENT_EXISTING;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTypeSpec_t.TRULY_RANDOM;
+import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.getChameleonMiniUSBDeviceParams;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.sendCommandToChameleon;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO;
@@ -111,7 +115,30 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
 
     public void onReceiveNewLoggingData(Intent intentLog) {
         IntentLogEntry.postNewIntentLog(intentLog);
+        ScrollView logScrollView = (ScrollView) findViewById(R.id.log_scroll_view);
+        if(logScrollView != null) {
+            logScrollView.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    ScrollView logScroller = (ScrollView) DemoActivity.localInst.findViewById(R.id.log_scroll_view);
+                    LinearLayout loggingParentView = (LinearLayout) DemoActivity.localInst.findViewById(R.id.loggingParentView);
+                    LinearLayout lastLogElt = (LinearLayout) loggingParentView.getChildAt(loggingParentView.getChildCount() - 1);
+                    lastLogElt.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                    int bottomEltHeight = lastLogElt.getMeasuredHeight();
+                    logScroller.scrollTo(0, logScroller.getBottom() + bottomEltHeight);
+                    logScroller.fullScroll(View.FOCUS_DOWN);
+                }
+            }, 25);
+        }
     }
+
+    public static Runnable updateStatusBarRunnable = new Runnable() {
+        public void run() {
+            DemoActivity.localInst.updateDemoWindowStatusBar();
+            updateStatusBarHandler.postDelayed(this, SERIAL_USB_COMMAND_TIMEOUT);
+        }
+    };
+    public static Handler updateStatusBarHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -177,11 +204,11 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
             LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
-            updateDemoWindowStatusBar();
         }
         else {
             LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
         }
+        updateStatusBarHandler.postDelayed(updateStatusBarRunnable, 25);
 
     }
 
@@ -206,18 +233,25 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     }
 
     public void actionButtonUploadCardDump(View button) {
+
         if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
             LibraryLogging.i(TAG, "Cannot upload a binary dump without a valid device present!");
             return;
         }
+
+        // upload the image:
         Spinner dumpImageSpinner = (Spinner) findViewById(R.id.dumpImageSpinner);
         int selectedDumpIndex = dumpImageSpinner.getSelectedItemPosition();
         String dumpImageFormat = getResources().getStringArray(R.array.sampleCardDumpConfigTypes)[selectedDumpIndex];
-        int dumpImagePath = (int) dumpImageSpinner.getSelectedItem();
-        int nextSlotPosition = ((Spinner) findViewById(R.id.slotNumberSpinner)).getSelectedItemPosition() + 1;
+        String dumpImagePath = dumpImageSpinner.getSelectedItem().toString();
+        String dumpImageRawFilename = dumpImagePath.substring(dumpImagePath.lastIndexOf("/") + 1);
+        int nextSlotPosition = ((Spinner) findViewById(R.id.slotNumberSpinner)).getSelectedItemPosition();
         ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.prepareChameleonEmulationSlot(nextSlotPosition, true);
         sendCommandToChameleon(SET_CONFIG, dumpImageFormat);
-        InputStream dumpIStream = getResources().openRawResource(dumpImagePath);
+        InputStream dumpIStream = getResources().openRawResource(getResources().getIdentifier(dumpImageRawFilename, "raw", getPackageName()));
+        try {
+            LibraryLogging.i(TAG, "Card Image \"" + dumpImageRawFilename + "\" of size " + dumpIStream.available() + "B ready for upload.");
+        } catch(Exception ioe) {}
         ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
     }
 
