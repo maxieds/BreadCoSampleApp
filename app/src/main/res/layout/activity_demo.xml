@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="2dp"
             android:layout_marginLeft="1dp"
-            android:columnCount="7"
+            android:columnCount="8"
             android:paddingLeft="0dp"
             android:layout_gravity="center_vertical|left"
             android:rowCount="1">
@@ -88,6 +88,14 @@
                 android:paddingRight="2dp"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/revgboard24" />
+
+            <ImageView
+                android:id="@+id/statusIconCardDumpDownload"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/downloadstatusicon16" />
 
             <ImageView
                 android:id="@+id/statusIconCardDumpUpload"
@@ -383,9 +391,9 @@
 
         <Button
             style="@style/GridButtons"
-            android:drawableLeft="@drawable/lock24"
-            android:onClick="actionButtonSetReadonly"
-            android:text="Set Readonly" />
+            android:drawableLeft="@drawable/downloadviaxmodem24"
+            android:onClick="actionButtonDownloadByXModem"
+            android:text="DOWNLOAD BIN" />
 
         <Button
             style="@style/GridButtons"
@@ -401,6 +409,12 @@
 
         <Button
             style="@style/GridButtons"
+            android:drawableLeft="@drawable/lock24"
+            android:onClick="actionButtonSetReadonly"
+            android:text="Toggle Readonly" />
+
+        <Button
+            style="@style/GridButtons"
             android:drawableLeft="@drawable/blankchip24"
             android:onClick="actionButtonSetConfiguration"
             android:text="MFU" />
@@ -410,12 +424,6 @@
             android:drawableLeft="@drawable/brainchip"
             android:onClick="actionButtonSetConfiguration"
             android:text="MFC1K" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/card24v9"
-            android:onClick="actionButtonSetConfiguration"
-            android:text="MFC1K7B" />
 
         <Button
             style="@style/GridButtons"

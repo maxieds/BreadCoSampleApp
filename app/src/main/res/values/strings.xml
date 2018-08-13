@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bread Company Sample App</string>
+    <string name="app_name">Bread Company Sample Application</string>
     <string name="app_desc">A functional demo of the ChameleonMiniUSB library.</string>
 
     <string-array name="slotNumbers">

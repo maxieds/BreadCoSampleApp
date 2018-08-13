@@ -33,19 +33,26 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toolbar;
 
+import com.maxieds.chameleonminiusb.ChameleonCommands;
 import com.maxieds.chameleonminiusb.ChameleonDeviceConfig;
 import com.maxieds.chameleonminiusb.LibraryLogging;
 import com.maxieds.chameleonminiusb.Utils;
 import com.maxieds.chameleonminiusb.ChameleonLibraryLoggingReceiver;
 import com.maxieds.chameleonminiusb.XModem;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Locale;
 
 import static com.maxieds.chameleonminiusb.ChameleonCommands.NODATA;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_ACTIVE_SLOT;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_MEMORY_SIZE;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_UID_SIZE;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_CONFIG;
+import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_READONLY;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_UID;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.SET_CONFIG;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTypeSpec_t.INCREMENT_EXISTING;
@@ -64,9 +71,28 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
 
     private static final String TAG = DemoActivity.class.getSimpleName();
 
-    public static final String PACKAGE_NOTIFY_CHANNRLID = "com.maxieda.sampleapp:Channel_01";
+    public static final String PACKAGE_NOTIFY_CHANNELID = "com.maxieds.sampleapp:Channel_01";
     public static final int DEMO_ACTIVITY_NOTIFY_ID = 1;
-    public static final int CHAMELEON_UPLOAD_NOTIFY_ID = 2;
+
+    public static final int SHORT_PAUSE = 25;
+    public static final int MEDIUM_PAUSE = 1250;
+    public static final int REDUCED_CMD_TIMEOUT = 500;
+
+    public static final String[] intentBroadcastTypes = new String[] {
+            UsbManager.ACTION_USB_DEVICE_ATTACHED,
+            UsbManager.ACTION_USB_DEVICE_DETACHED,
+            "CHAMELEON_UPLOAD_SUCCESS",
+            "CHAMELEON_UPLOAD_FAILURE",
+            "CHAMELEON_DOWNLOAD_SUCCESS",
+            "CHAMELEON_DOWNLOAD_FAILURE",
+    };
+
+    public static final String[] activityPermissions = new String[] {
+            "android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.WRITE_EXTERNAL_STORAGE",
+            "android.permission.INTERNET",
+            "com.android.example.USB_PERMISSION",
+    };
 
     public static DemoActivity localInst;
 
@@ -91,7 +117,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             return;
         }
         int standardTimeout = ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT;
-        ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT = 500;
+        ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT = REDUCED_CMD_TIMEOUT;
         disableStatusIcon(R.id.statusIconNoUSB);
         enableStatusIcon(R.id.statusIconUSB, R.drawable.usbconnected16);
         if(ChameleonDeviceConfig.isRevisionEDevice()) {
@@ -144,41 +170,58 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                     logScroller.scrollTo(0, logScroller.getBottom() + bottomEltHeight);
                     logScroller.fullScroll(View.FOCUS_DOWN);
                 }
-            }, 25);
+            }, SHORT_PAUSE);
         }
     }
 
-    private boolean postSystemNotificationIcon(int notifyID, String notifyName, int drawableResID, String notifyAppDesc) {
+    private boolean postSystemNotificationIcon(int notifyID, String notifyName, int drawableResID, String notifyAppDesc,
+                                               String[] statusMessages, boolean createChannel) {
 
         NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(notifyManager == null) {
             return false;
         }
 
-        NotificationChannel notifyChannel = new NotificationChannel(PACKAGE_NOTIFY_CHANNRLID, notifyName, NotificationManager.IMPORTANCE_LOW);
-        notifyChannel.setDescription(notifyAppDesc);
-        notifyChannel.enableLights(true);
-        notifyChannel.setLightColor(Color.GREEN);
-        notifyChannel.enableVibration(true);
-        notifyChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
-        notifyManager.createNotificationChannel(notifyChannel);
+        if(createChannel) {
+            NotificationChannel notifyChannel = new NotificationChannel(PACKAGE_NOTIFY_CHANNELID, notifyName, NotificationManager.IMPORTANCE_LOW);
+            notifyChannel.setDescription(notifyAppDesc);
+            notifyChannel.enableLights(true);
+            notifyChannel.setLightColor(Color.GREEN);
+            notifyChannel.enableVibration(true);
+            notifyChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
+            notifyManager.createNotificationChannel(notifyChannel);
+        }
 
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+        if(statusMessages != null) {
+            for(int msg = 0; msg < statusMessages.length; msg++) {
+                inboxStyle.addLine(statusMessages[msg]);
+            }
+        }
         Notification notifyIcon = new NotificationCompat.Builder(getApplicationContext())
                 .setSmallIcon(drawableResID)
                 .setContentTitle(notifyName)
                 .setContentText(notifyAppDesc)
                 .setOngoing(false)
-                .setChannelId(PACKAGE_NOTIFY_CHANNRLID)
+                .setChannelId(PACKAGE_NOTIFY_CHANNELID)
+                .setStyle(inboxStyle)
                 .build();
+
         notifyManager.notify(notifyID, notifyIcon);
         return true;
 
+    }
+
+    private boolean postPackageNotification(int notifyID, String[] statusMessages, boolean createChannel) {
+        return postSystemNotificationIcon(notifyID, getString(R.string.app_name), R.drawable.chameleonnotifyicon32,
+                getString(R.string.app_desc), statusMessages, createChannel);
     }
 
     private void removeSystemNotificationIcon(int notifyID) {
         NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(notifyManager != null) {
             notifyManager.cancel(notifyID);
+            notifyManager.deleteNotificationChannel(PACKAGE_NOTIFY_CHANNELID);
         }
     }
 
@@ -223,6 +266,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         disableStatusIcon(R.id.statusIconRevE);
         disableStatusIcon(R.id.statusIconRevG);
         disableStatusIcon(R.id.statusIconCardDumpUpload);
+        disableStatusIcon(R.id.statusIconCardDumpDownload);
 
         // configure misc settings for the running sample app:
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -230,29 +274,20 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         configureLoggingSpinner();
 
         // setup and request necessary permissions (ESPECIALLY USB):
-        String[] permissions = {
-                "android.permission.READ_EXTERNAL_STORAGE",
-                "android.permission.WRITE_EXTERNAL_STORAGE",
-                "android.permission.INTERNET",
-                "com.android.example.USB_PERMISSION",
-        };
-        ActivityCompat.requestPermissions(this, permissions, 0);
+        ActivityCompat.requestPermissions(this, activityPermissions, 0);
 
         // now setup the basic serial port so that we can accept attached USB device connections:
         if(!ChameleonDeviceConfig.usbReceiversRegistered) {
             BroadcastReceiver usbActionReceiver = new BroadcastReceiver() {
                 @RequiresPermission("com.android.example.USB_PERMISSION")
                 public void onReceive(Context context, Intent intent) {
-                    if (intent.getAction() != null && (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED) || intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_DETACHED))) {
-                        onNewIntent(intent);
-                    }
+                    onNewIntent(intent);
                 }
             };
             IntentFilter usbActionFilter = new IntentFilter();
-            usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-            usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-            usbActionFilter.addAction("CHAMELEON_UPLOAD_SUCCESS");
-            usbActionFilter.addAction("CHAMELEON_UPLOAD_FAILURE");
+            for(int i = 0; i < intentBroadcastTypes.length; i++) {
+                usbActionFilter.addAction(intentBroadcastTypes[i]);
+            }
             registerReceiver(usbActionReceiver, usbActionFilter);
         }
 
@@ -265,11 +300,10 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         else {
             LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
         }
-        updateStatusBarHandler.postDelayed(updateStatusBarRunnable, 25);
+        updateStatusBarHandler.postDelayed(updateStatusBarRunnable, SHORT_PAUSE);
 
         // place a chameleon icon in the system (notifications) tray while the app is running:
-        postSystemNotificationIcon(DEMO_ACTIVITY_NOTIFY_ID, "DEMO ACTIVITY",
-                R.drawable.chameleonnotifyicon32, getString(R.string.app_name) + ": " + getString(R.string.app_desc));
+        postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, null, true);
 
     }
 
@@ -282,16 +316,30 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
         if(intentAction.equals("ACTION_USB_DEVICE_ATTACHED")) {
             ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
-            Utils.sleepThreadMillisecond(1250);
+            postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, new String[] { "New Chameleon Mini Device Attached" }, false);
+            Utils.sleepThreadMillisecond(MEDIUM_PAUSE);
             updateDemoWindowStatusBar();
         }
         else if(intentAction.equals("ACTION_USB_DEVICE_DETACHED")) {
             ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
-            Utils.sleepThreadMillisecond(1250);
+            postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, new String[] { "Chameleon Mini Device Detached" }, false);
+            Utils.sleepThreadMillisecond(MEDIUM_PAUSE);
             updateDemoWindowStatusBar();
         }
-        else if(intentAction.equals("CHAMELEON_UPLOAD_SUCCESS")) {}
+        else if(intentAction.equals("CHAMELEON_UPLOAD_SUCCESS")) {
+            String uploadedDumpConfig = intent.getStringExtra("ChameleonConfig");
+            String statusMsg = "New " + uploadedDumpConfig + " Configuration Loaded";
+            postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, new String[] { statusMsg }, false);
+        }
         else if(intentAction.equals("CHAMELEON_UPLOAD_FAILURE")) {}
+        else if(intentAction.equals("CHAMELEON_DOWNLOAD_SUCCESS")) {
+            String dumpFilePath = intent.getStringExtra("FilePath");
+            int lastFileSlash = dumpFilePath.lastIndexOf("/");
+            dumpFilePath = dumpFilePath.substring(lastFileSlash + 1);
+            String statusMsg = "Binary Card Dump Downloaded to \"" + dumpFilePath + "\"";
+            postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, new String[] { statusMsg }, false);
+        }
+        else if(intentAction.equals("CHAMELEON_DOWNLOAD_FAILURE")) {}
 
     }
 
@@ -336,19 +384,15 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     public void actionButtonUploadCardDump(View button) {
 
         if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
-            LibraryLogging.i(TAG, "Cannot upload a binary dump without a valid device present!");
+            LibraryLogging.w(TAG, "Cannot upload a binary dump without a valid device present!");
             return;
         }
-
-        // set a notification icon indicating that an upload is in progress:
-        //postSystemNotificationIcon(CHAMELEON_UPLOAD_NOTIFY_ID, "CHAMELEON UPLOAD",
-        //        R.drawable.uploadnotifyicon, "Chameleon card dump upload in progress ... ");
         enableStatusIcon(R.id.statusIconCardDumpUpload, R.drawable.uploadstatusicon16);
 
         // upload the image:
         Spinner dumpImageSpinner = (Spinner) findViewById(R.id.dumpImageSpinner);
         int selectedDumpIndex = dumpImageSpinner.getSelectedItemPosition();
-        String dumpImageFormat = getResources().getStringArray(R.array.sampleCardDumpConfigTypes)[selectedDumpIndex];
+        final String dumpImageFormat = getResources().getStringArray(R.array.sampleCardDumpConfigTypes)[selectedDumpIndex];
         String dumpImagePath = dumpImageSpinner.getSelectedItem().toString();
         String dumpImageRawFilename = dumpImagePath.substring(dumpImagePath.lastIndexOf("/") + 1);
         int nextSlotPosition = ((Spinner) findViewById(R.id.slotNumberSpinner)).getSelectedItemPosition();
@@ -365,25 +409,87 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                 ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
                 while(!XModem.EOT) {
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(2 * SHORT_PAUSE);
                     } catch(InterruptedException ie) {
                         break;
                     }
                 }
                 try {
-                    Thread.sleep(1250);
+                    Thread.sleep(MEDIUM_PAUSE);
                 } catch(InterruptedException ie) {}
                 DemoActivity.localInst.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.verifyChameleonUpload(dumpIStream)) {
                             LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
-                            sendBroadcast(new Intent("CHAMELEON_UPLOAD_SUCCESS"));
+                            Intent successIntent = new Intent("CHAMELEON_UPLOAD_SUCCESS");
+                            successIntent.putExtra("ChameleonConfig", dumpImageFormat);
+                            sendBroadcast(successIntent);
                         } else {
                             LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
                             sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
                         }
-                        //removeSystemNotificationIcon(CHAMELEON_UPLOAD_NOTIFY_ID);
+                        disableStatusIcon(R.id.statusIconCardDumpUpload);
+                    }
+                });
+            }
+        });
+
+    }
+
+    public void actionButtonDownloadByXModem(View button) {
+
+        if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
+            LibraryLogging.w(TAG, "Cannot download a binary dump without a valid device present!");
+            return;
+        }
+        enableStatusIcon(R.id.statusIconCardDumpDownload, R.drawable.downloadstatusicon16);
+
+        // get information for the filename:
+        File binaryDumpFile;
+        try {
+            String cardMemSize = sendCommandToChameleon(GET_MEMORY_SIZE, null).cmdResponseData;
+            String cardConfig = sendCommandToChameleon(QUERY_CONFIG, null).cmdResponseData.replace("_", "-");
+            String cardUID = sendCommandToChameleon(QUERY_UID, null).cmdResponseData.toUpperCase();
+            String dumpFileName = String.format(Locale.ENGLISH, "carddump-%s-%s-%sK-%s.bin", cardConfig, cardUID, cardMemSize, Utils.getTimestamp());
+            binaryDumpFile = LibraryLogging.createTimestampedLogFile("BinaryCardDumps", dumpFileName);
+            Log.i(TAG, "Writing binary card dump of size " + cardMemSize + "K out to file \"" + binaryDumpFile.getAbsolutePath() + "\".");
+        } catch(Exception ioe) {
+            Log.e(TAG, ioe.getMessage());
+            ioe.printStackTrace();
+            disableStatusIcon(R.id.statusIconCardDumpDownload);
+            return;
+        }
+
+        final File binaryDumpFileFinal = binaryDumpFile;
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonDownload(binaryDumpFileFinal);
+                while(!XModem.EOT) {
+                    try {
+                        Thread.sleep(2 * SHORT_PAUSE);
+                    } catch(InterruptedException ie) {
+                        break;
+                    }
+                }
+                try {
+                    Thread.sleep(MEDIUM_PAUSE);
+                } catch(InterruptedException ie) {}
+                DemoActivity.localInst.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(!XModem.transmissionError()) {
+                            Intent downloadSuccessIntent = new Intent("CHAMELEON_DOWNLOAD_SUCCESS");
+                            downloadSuccessIntent.putExtra("FilePath", binaryDumpFileFinal.getAbsolutePath());
+                            sendBroadcast(downloadSuccessIntent);
+                            Log.i(TAG, "Successfully downloaded binary card dump to file.");
+                        }
+                        else {
+                            Intent downloadFailureIntent = new Intent("CHAMELEON_DOWNLOAD_FAILURE");
+                            sendBroadcast(downloadFailureIntent);
+                            Log.i(TAG, "Failed to download binary card dump to file.");
+                        }
                         disableStatusIcon(R.id.statusIconCardDumpUpload);
                     }
                 });
@@ -450,7 +556,20 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.i(TAG, "Cannot set the active slot RO without a valid device present!");
             return;
         }
-        sendCommandToChameleon(SET_CONFIG, 1);
+        try {
+            int readOnlySetting = Integer.parseInt(ChameleonDeviceConfig.sendCommandToChameleon(QUERY_READONLY, null).cmdResponseData);
+            int nextReadOnlySetting = (readOnlySetting + 1) % 2;
+            String nextROStatus = (nextReadOnlySetting == 0) ? "Read-Write" : "Read-Only";
+            ChameleonCommands.ChameleonCommandResult roCmdResult = sendCommandToChameleon(SET_CONFIG, nextReadOnlySetting);
+            if(roCmdResult.isValid) {
+                Log.i(TAG, "Successfully set active slot status to " + nextROStatus + ".");
+            }
+            else {
+                Log.i(TAG, "Unable to toggle active slot setting to " + nextROStatus + ": " + roCmdResult.cmdResponseMsg);
+            }
+        } catch(Exception nfe) {
+            Log.e(TAG, "Unable to change RO/RW status of the active slot: " + nfe.getMessage());
+        }
     }
 
     public void actionButtonSetConfiguration(View button) {
