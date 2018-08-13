@@ -7,7 +7,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorAccentLog">#729FCF</color>
     <color name="colorAccentHighlight">#B9D0E9</color>
-    <color name="actionBarTextColor">#EBEBEB</color>
+    <color name="actionBarTextColor">#EEEEEC</color>
 
     <color name="rainbow1">#f46528</color>
     <color name="rainbow2">#ff5ba5</color>

@@ -7,12 +7,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.usb.UsbManager;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -29,6 +31,7 @@ import com.maxieds.chameleonminiusb.ChameleonLibraryLoggingReceiver;
 
 import java.io.InputStream;
 
+import static com.maxieds.chameleonminiusb.ChameleonCommands.NODATA;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_ACTIVE_SLOT;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.GET_MEMORY_SIZE;
 import static com.maxieds.chameleonminiusb.ChameleonCommands.StandardCommandSet.QUERY_CONFIG;
@@ -39,6 +42,7 @@ import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.ChameleonUIDTyp
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.getChameleonMiniUSBDeviceParams;
 import static com.maxieds.chameleonminiusb.ChameleonDeviceConfig.sendCommandToChameleon;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO;
+import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE;
 
 public class DemoActivity extends AppCompatActivity implements ChameleonLibraryLoggingReceiver {
 
@@ -52,25 +56,57 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     }
 
     public void disableStatusIcon(int iconID) {
-        ((ImageView) findViewById(iconID)).setAlpha(101);
+        ((ImageView) findViewById(iconID)).setAlpha(127);
     }
 
     public void updateDemoWindowStatusBar() {
         if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
+            enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
+            disableStatusIcon(R.id.statusIconUSB);
+            disableStatusIcon(R.id.statusIconRevE);
+            disableStatusIcon(R.id.statusIconRevG);
             ((TextView) findViewById(R.id.deviceConfigText)).setText("DEVICE CONFIGURATION");
             ((TextView) findViewById(R.id.deviceUIDText)).setText("DEVICE UID");
             ((TextView) findViewById(R.id.deviceMiscSettingsText)).setText("SLOT-# : MEM-0K");
             return;
         }
+        int standardTimeout = ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT;
+        ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT = 500;
+        disableStatusIcon(R.id.statusIconNoUSB);
+        enableStatusIcon(R.id.statusIconUSB, R.drawable.usbconnected16);
+        if(ChameleonDeviceConfig.isRevisionEDevice()) {
+            enableStatusIcon(R.id.statusIconRevE, R.drawable.reveboard24);
+            disableStatusIcon(R.id.statusIconRevG);
+        }
+        else if(ChameleonDeviceConfig.isRevisionGDevice()) {
+            enableStatusIcon(R.id.statusIconRevG, R.drawable.revgboard24);
+            disableStatusIcon(R.id.statusIconRevE);
+        }
+        else {
+            disableStatusIcon(R.id.statusIconRevE);
+            disableStatusIcon(R.id.statusIconRevG);
+        }
         try {
-            String nfcConfig = sendCommandToChameleon(QUERY_CONFIG, null).cmdResponseData;
-            String uid = String.join(":", sendCommandToChameleon(QUERY_UID, null).cmdResponseData.split("(?<=\\G..)"));
-            String memSize = String.valueOf(Integer.parseInt(sendCommandToChameleon(GET_MEMORY_SIZE, null).cmdResponseData) / 4096) + "K";
-            String slotNumber = "SLOT-" + sendCommandToChameleon(GET_ACTIVE_SLOT, null).cmdResponseData;
-            ((TextView) findViewById(R.id.deviceConfigText)).setText(nfcConfig);
-            ((TextView) findViewById(R.id.deviceUIDText)).setText(uid);
-            ((TextView) findViewById(R.id.deviceMiscSettingsText)).setText(slotNumber + " : MEM-" + memSize);
-        } catch(Exception nfe) {}
+            String nfcConfigResp = sendCommandToChameleon(QUERY_CONFIG, null).cmdResponseData;
+            String nfcConfig = nfcConfigResp.equals(NODATA) ? "???" : nfcConfigResp;
+            String uidResp = sendCommandToChameleon(QUERY_UID, null).cmdResponseData;
+            String uid = uidResp.equals(NODATA) ? "???" : String.join(":", uidResp.replaceAll("..(?!$)", "$0:"));
+            String memSize;
+            try {
+                memSize = String.valueOf(Integer.parseInt(sendCommandToChameleon(GET_MEMORY_SIZE, null).cmdResponseData)) + "K";
+            } catch(Exception nfe) {
+                memSize = "SIZE-???";
+            }
+            String slotResp = sendCommandToChameleon(GET_ACTIVE_SLOT, null).cmdResponseData;
+            String slotNumber = "SLOT-" + (slotResp.equals(NODATA) ? "???" : slotResp);
+            ((TextView) findViewById(R.id.deviceConfigText)).setText("CFG: " + nfcConfig);
+            ((TextView) findViewById(R.id.deviceUIDText)).setText("UID: " + uid);
+            ((TextView) findViewById(R.id.deviceMiscSettingsText)).setText(slotNumber + " / MEM-" + memSize);
+        } catch(Exception nfe) {
+            Log.e(TAG, nfe.getMessage());
+            nfe.printStackTrace();
+        }
+        ChameleonDeviceConfig.SERIAL_USB_COMMAND_TIMEOUT = standardTimeout;
     }
 
     public void onReceiveNewLoggingData(Intent intentLog) {
@@ -81,6 +117,14 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        if(!isTaskRoot()) {
+            final Intent intent = getIntent();
+            final String intentAction = intent.getAction();
+            if (intentAction != null && (intentAction.equals(UsbManager.ACTION_USB_DEVICE_DETACHED) || intentAction.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED))) {
+                finish();
+                return;
+            }
+        }
         setContentView(R.layout.activity_demo);
         localInst = this;
 
@@ -98,7 +142,6 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         disableStatusIcon(R.id.statusIconUSB);
         disableStatusIcon(R.id.statusIconRevE);
         disableStatusIcon(R.id.statusIconRevG);
-        enableStatusIcon(R.id.signalStrength, R.drawable.signalbars5);
 
         // configure misc settings for the running sample app:
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -111,10 +154,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                 "android.permission.INTERNET",
                 "com.android.example.USB_PERMISSION",
         };
-        if (android.os.Build.VERSION.SDK_INT >= 23)
-            requestPermissions(permissions, 200);
-        else
-            ActivityCompat.requestPermissions(this, permissions, 200);
+        ActivityCompat.requestPermissions(this, permissions, 0);
 
         // now setup the basic serial port so that we can accept attached USB device connections:
         if(!ChameleonDeviceConfig.usbReceiversRegistered) {
@@ -130,11 +170,18 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
             usbActionFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
             registerReceiver(usbActionReceiver, usbActionFilter);
-            ChameleonDeviceConfig.usbReceiversRegistered = true;
         }
 
         // initialize the Chameleon USB library so it gets up and a' chugging:
         (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE);
+        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
+            LibraryLogging.i(TAG, "The chameleon device is connected! :)");
+            LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
+            updateDemoWindowStatusBar();
+        }
+        else {
+            LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
+        }
 
     }
 
@@ -147,28 +194,12 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
         if(intentAction.equals("ACTION_USB_DEVICE_ATTACHED")) {
             ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
-            Utils.sleepThreadMillisecond(1000);
-            if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
-                return;
-            }
-            disableStatusIcon(R.id.statusIconNoUSB);
-            enableStatusIcon(R.id.statusIconUSB, R.drawable.usbconnected16);
-            if(ChameleonDeviceConfig.isRevisionEDevice()) {
-                enableStatusIcon(R.id.statusIconRevE, R.drawable.reveboard24);
-                disableStatusIcon(R.id.statusIconRevG);
-            }
-            else {
-                enableStatusIcon(R.id.statusIconRevG, R.drawable.revgboard24);
-                disableStatusIcon(R.id.statusIconRevE);
-            }
+            Utils.sleepThreadMillisecond(1250);
             updateDemoWindowStatusBar();
         }
         else if(intentAction.equals("ACTION_USB_DEVICE_DETACHED")) {
             ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.onNewIntent(intent);
-            disableStatusIcon(R.id.statusIconUSB);
-            enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
-            disableStatusIcon(R.id.statusIconRevE);
-            disableStatusIcon(R.id.statusIconRevG);
+            Utils.sleepThreadMillisecond(1250);
             updateDemoWindowStatusBar();
         }
 
@@ -215,7 +246,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             return;
         }
         String[] deviceSettings = getChameleonMiniUSBDeviceParams();
-        LibraryLogging.LogEntry.enqueueNewLog(LOG_ADB_INFO, TAG, deviceSettings);
+        LibraryLogging.i(TAG, String.join("\n", deviceSettings));
     }
 
     public void actionButtonRandomUID(View button) {

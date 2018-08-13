@@ -18,45 +18,42 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="2dp"
+        android:layout_height="4dp"
         android:background="@color/colorPrimaryDark" />
 
     <GridLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_margin="0dp"
-        android:background="@color/colorPrimaryDark"
-        android:columnCount="2"
+        android:background="@drawable/settings_bar_gradient2"
+        android:columnCount="3"
         android:orientation="vertical"
         android:padding="0dp"
-        android:rowCount="2">
-
-        <TextView
-            android:id="@+id/deviceConfigText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.42"
-            android:minWidth="125dp"
-            android:paddingRight="10dp"
-            android:text="DEVICE CONFIGURATION"
-            android:textColor="@color/actionBarTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold" />
+        android:rowCount="1">
 
         <GridLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="2dp"
             android:layout_marginLeft="1dp"
-            android:columnCount="5"
+            android:columnCount="6"
             android:paddingLeft="0dp"
+            android:layout_gravity="center_vertical|left"
             android:rowCount="1">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="3dp"
+                android:paddingLeft="3dp"
+                android:src="@drawable/usbstatusmarker16" />
 
             <ImageView
                 android:id="@+id/statusIconUSB"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
                 android:src="@drawable/usbconnected16" />
 
             <ImageView
@@ -64,13 +61,22 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
                 android:src="@drawable/usbdisconnected16" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="3dp"
+                android:paddingLeft="3dp"
+                android:src="@drawable/chameleonstatusmarker16" />
 
             <ImageView
                 android:id="@+id/statusIconRevE"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
                 android:src="@drawable/reveboard24" />
 
             <ImageView
@@ -78,40 +84,68 @@
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:paddingRight="2dp"
+                android:layout_gravity="center_vertical"
                 android:src="@drawable/revgboard24" />
-
-            <ImageView
-                android:id="@+id/signalStrength"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:paddingRight="2dp"
-                android:src="@drawable/signalbars5" />
 
         </GridLayout>
 
-        <TextView
-            android:id="@+id/deviceUIDText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.42"
-            android:minWidth="125dp"
-            android:paddingRight="10dp"
-            android:text="DEVICE UID"
-            android:textColor="@color/actionBarTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold" />
+        <View
+            android:layout_width="3dp"
+            android:layout_height="55dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="5dp"
+            android:layout_gravity="center_vertical|center"
+            android:background="@color/colorPrimaryDark" />
 
-        <TextView
-            android:id="@+id/deviceMiscSettingsText"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.42"
-            android:minWidth="125dp"
-            android:paddingRight="12dp"
-            android:text="SLOT# : MEMSIZE"
-            android:textColor="@color/actionBarTextColor"
-            android:textSize="10sp"
-            android:textStyle="normal|italic" />
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical|center">
+
+            <TextView
+                android:id="@+id/deviceConfigText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42"
+                android:drawableLeft="@drawable/bulletpoint16"
+                android:drawablePadding="4dp"
+                android:minWidth="300dp"
+                android:paddingRight="10dp"
+                android:text="DEVICE CONFIGURATION"
+                android:textColor="@color/actionBarTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold" />
+
+            <TextView
+                android:id="@+id/deviceUIDText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42"
+                android:drawableLeft="@drawable/bulletpoint16"
+                android:drawablePadding="4dp"
+                android:minWidth="300dp"
+                android:paddingRight="10dp"
+                android:text="DEVICE UID"
+                android:textColor="@color/actionBarTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold" />
+
+            <TextView
+                android:id="@+id/deviceMiscSettingsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.42"
+                android:drawableLeft="@drawable/bulletpoint16"
+                android:drawablePadding="4dp"
+                android:minWidth="300dp"
+                android:paddingRight="12dp"
+                android:text="SLOT# : MEMSIZE"
+                android:textColor="@color/actionBarTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|italic|bold" />
+
+        </LinearLayout>
 
     </GridLayout>
 
@@ -123,11 +157,12 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?colorPrimary"
+        android:background="@drawable/action_bar_gradient"
         android:drawableLeft="@drawable/livelogsmarker24"
         android:drawablePadding="5dp"
         android:singleLine="true"
         android:text="Live Logging Display: "
+        android:textColor="@color/actionBarTextColor"
         android:textAllCaps="true"
         android:textStyle="bold|italic" />
 
@@ -140,7 +175,8 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="15dp"
+        android:padding="0dp"
+        android:layout_margin="0dp"
         android:background="@color/colorPrimaryDark">
 
         <LinearLayout
@@ -148,24 +184,25 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:orientation="vertical"
-            android:padding="5dp"
-            android:background="@color/colorPrimaryDark"/>
+            android:padding="2dp"
+            android:background="@drawable/logging_console_gradient"/>
 
     </ScrollView>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="4dp"
+        android:layout_height="2dp"
         android:background="@color/colorPrimaryDark" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?colorPrimary"
+        android:background="@drawable/action_bar_gradient"
         android:drawableLeft="@drawable/uploadingested24"
         android:drawablePadding="5dp"
         android:singleLine="true"
         android:text="Upload Ingested Dumps: "
+        android:textColor="@color/actionBarTextColor"
         android:textAllCaps="true"
         android:textStyle="bold|italic" />
 
@@ -191,6 +228,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:drawablePadding="5dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="12dp"
                 android:singleLine="true"
                 android:text="Slot #: "
                 android:textAllCaps="true"
@@ -207,10 +246,11 @@
 
             <Button
                 style="@style/GridButtons"
+                android:background="@android:color/transparent"
                 android:drawableLeft="@drawable/binaryfile2"
                 android:onClick="actionButtonUploadCardDump"
-                android:width="50dp"
-                android:layout_gravity="center_horizontal|left"
+                android:layout_gravity="center_horizontal|right"
+                android:layout_marginRight="25dp"
                 android:text="UPLOAD TAG" />
 
         </GridLayout>
@@ -226,6 +266,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
                 android:drawablePadding="5dp"
                 android:singleLine="true"
                 android:text="TAG Dump: "
@@ -258,11 +299,12 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?colorPrimary"
+        android:background="@drawable/action_bar_gradient"
         android:drawableLeft="@drawable/miscfunc24"
         android:drawablePadding="5dp"
         android:singleLine="true"
         android:text="Misc Functionality: "
+        android:textColor="@color/actionBarTextColor"
         android:textAllCaps="true"
         android:textStyle="bold|italic" />
 

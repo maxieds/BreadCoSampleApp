@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:padding="10dp">
 
     <View
@@ -16,6 +17,8 @@
         android:layout_width="fill_parent"
         android:layout_height="20dp"
         android:paddingRight="10dp"
+        android:drawablePadding="3dp"
+        android:background="@color/colorAccentLog"
         android:textColor="@color/actionBarTextColor"
         android:textSize="12sp"
         android:singleLine="true"
@@ -32,6 +35,7 @@
         android:layout_width="fill_parent"
         android:layout_height="17dp"
         android:paddingRight="10dp"
+        android:background="@color/colorAccentLog"
         android:textColor="@color/actionBarTextColor"
         android:textSize="10sp"
         android:singleLine="true"
@@ -48,8 +52,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:paddingRight="10dp"
+        android:background="@color/colorAccentLog"
         android:textColor="@color/actionBarTextColor"
-        android:textSize="7sp"
+        android:textSize="10sp"
         android:singleLine="false"
         android:typeface="monospace"
         android:textStyle="normal|bold" />
