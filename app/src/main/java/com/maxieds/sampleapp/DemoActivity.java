@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -95,6 +96,11 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     };
 
     public static DemoActivity localInst;
+    private static boolean updateStatusBar = true;
+
+    public static void setUpdateStatusBar(boolean enabled) {
+        updateStatusBar = enabled;
+    }
 
     public void enableStatusIcon(int iconID, int iconDrawable) {
         ((ImageView) findViewById(iconID)).setAlpha(255);
@@ -106,7 +112,10 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     }
 
     public void updateDemoWindowStatusBar() {
-        if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
+        if(!updateStatusBar) {
+            return;
+        }
+        else if(!ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.isConfigured()) {
             enableStatusIcon(R.id.statusIconNoUSB, R.drawable.usbdisconnected16);
             disableStatusIcon(R.id.statusIconUSB);
             disableStatusIcon(R.id.statusIconRevE);
@@ -228,7 +237,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     public static Runnable updateStatusBarRunnable = new Runnable() {
         public void run() {
             DemoActivity.localInst.updateDemoWindowStatusBar();
-            updateStatusBarHandler.postDelayed(this, SERIAL_USB_COMMAND_TIMEOUT);
+            updateStatusBarHandler.postDelayed(this, 4 * SERIAL_USB_COMMAND_TIMEOUT);
         }
     };
     public static Handler updateStatusBarHandler = new Handler();
@@ -256,7 +265,9 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         actionBar.setSubtitleTextColor(getResources().getColor(R.color.actionBarTextColor));
         actionBar.setSubtitle("Bread Company Demo Application v" + BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")");
         actionBar.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        actionBar.setLogo(getResources().getDrawable(R.drawable.chameleonusb64));
+        Drawable toolbarLogo = getResources().getDrawable(R.drawable.chameleonusb64);
+        toolbarLogo.setAlpha(127);
+        actionBar.setLogo(toolbarLogo);
         actionBar.setBackground(getResources().getDrawable(R.drawable.status_bar_gradient));
         actionBar.setContentInsetsAbsolute(0, 75);
 
@@ -300,7 +311,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         else {
             LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
         }
-        updateStatusBarHandler.postDelayed(updateStatusBarRunnable, SHORT_PAUSE);
+        updateStatusBarHandler.postDelayed(updateStatusBarRunnable, REDUCED_CMD_TIMEOUT);
 
         // place a chameleon icon in the system (notifications) tray while the app is running:
         postPackageNotification(DEMO_ACTIVITY_NOTIFY_ID, null, true);
@@ -387,6 +398,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.w(TAG, "Cannot upload a binary dump without a valid device present!");
             return;
         }
+        setUpdateStatusBar(false);
         enableStatusIcon(R.id.statusIconCardDumpUpload, R.drawable.uploadstatusicon16);
 
         // upload the image:
@@ -430,6 +442,8 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                             sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
                         }
                         disableStatusIcon(R.id.statusIconCardDumpUpload);
+                        setUpdateStatusBar(true);
+                        updateDemoWindowStatusBar();
                     }
                 });
             }
@@ -443,6 +457,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             LibraryLogging.w(TAG, "Cannot download a binary dump without a valid device present!");
             return;
         }
+        setUpdateStatusBar(false);
         enableStatusIcon(R.id.statusIconCardDumpDownload, R.drawable.downloadstatusicon16);
 
         // get information for the filename:
@@ -458,6 +473,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             Log.e(TAG, ioe.getMessage());
             ioe.printStackTrace();
             disableStatusIcon(R.id.statusIconCardDumpDownload);
+            setUpdateStatusBar(true);
             return;
         }
 
@@ -490,7 +506,9 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                             sendBroadcast(downloadFailureIntent);
                             Log.i(TAG, "Failed to download binary card dump to file.");
                         }
-                        disableStatusIcon(R.id.statusIconCardDumpUpload);
+                        disableStatusIcon(R.id.statusIconCardDumpDownload);
+                        setUpdateStatusBar(true);
+                        updateDemoWindowStatusBar();
                     }
                 });
             }
