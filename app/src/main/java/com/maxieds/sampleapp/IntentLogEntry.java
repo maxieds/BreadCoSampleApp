@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.maxieds.chameleonminiusb.Utils;
+
 import java.util.Locale;
 import java.util.Random;
 
@@ -71,7 +73,7 @@ public class IntentLogEntry {
         Log.i(TAG, "Timestamp: " + intentLog.getStringExtra("Timestamp"));
         Log.i(TAG, "Timestamp: " + intentLog.getStringExtra("LogSeverity"));
         Log.i(TAG, "SourceCodeRefs: " + intentLog.getStringExtra("SourceCodeRefs"));
-        Log.i(TAG, "MessageData: \"" + String.join(", \"", intentLog.getStringArrayExtra("MessageData")) + "\"");
+        Log.i(TAG, "MessageData: \"" + Utils.stringJoin(", \"", intentLog.getStringArrayExtra("MessageData")) + "\"");
 
         LayoutInflater layoutInflater = (LayoutInflater) DemoActivity.localInst.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         LinearLayout blankLogEntry = (LinearLayout) layoutInflater.inflate(R.layout.intent_log_entry, null);
@@ -100,7 +102,7 @@ public class IntentLogEntry {
 
         TextView msgDataField = (TextView) blankLogEntry.findViewById(R.id.textContent);
         msgDataField.setBackgroundResource(colorScheme[COLOR_BASE]);
-        msgDataField.setText(String.join("\n", intentLog.getStringArrayExtra("MessageData")));
+        msgDataField.setText(Utils.stringJoin("\n", intentLog.getStringArrayExtra("MessageData")));
         msgDataField.setTextColor(colorScheme[COLOR_TITLE]);
         upperTitle.setEnabled(true);
         upperTitle.setVisibility(View.VISIBLE);

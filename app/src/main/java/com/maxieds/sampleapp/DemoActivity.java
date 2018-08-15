@@ -2,7 +2,6 @@ package com.maxieds.sampleapp;
 
 import android.Manifest;
 import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +13,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.support.annotation.RequiresPermission;
 import android.support.v4.app.ActivityCompat;
@@ -145,7 +145,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             String nfcConfigResp = sendCommandToChameleon(QUERY_CONFIG, null).cmdResponseData;
             String nfcConfig = nfcConfigResp.equals(NODATA) ? "???" : nfcConfigResp;
             String uidResp = sendCommandToChameleon(QUERY_UID, null).cmdResponseData;
-            String uid = uidResp.equals(NODATA) ? "???" : String.join(":", uidResp.replaceAll("..(?!$)", "$0:"));
+            String uid = uidResp.equals(NODATA) ? "???" : ":" + uidResp.replaceAll("..(?!$)", "$0:");
             String memSize;
             try {
                 memSize = String.valueOf(Integer.parseInt(sendCommandToChameleon(GET_MEMORY_SIZE, null).cmdResponseData)) + "K";
@@ -186,13 +186,17 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     private boolean postSystemNotificationIcon(int notifyID, String notifyName, int drawableResID, String notifyAppDesc,
                                                String[] statusMessages, boolean createChannel) {
 
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return false;
+        }
+
         NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(notifyManager == null) {
             return false;
         }
 
         if(createChannel) {
-            NotificationChannel notifyChannel = new NotificationChannel(PACKAGE_NOTIFY_CHANNELID, notifyName, NotificationManager.IMPORTANCE_LOW);
+            android.app.NotificationChannel notifyChannel = new android.app.NotificationChannel(PACKAGE_NOTIFY_CHANNELID, notifyName, NotificationManager.IMPORTANCE_LOW);
             notifyChannel.setDescription(notifyAppDesc);
             notifyChannel.enableLights(true);
             notifyChannel.setLightColor(Color.GREEN);
@@ -227,6 +231,9 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     }
 
     private void removeSystemNotificationIcon(int notifyID) {
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
         NotificationManager notifyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(notifyManager != null) {
             notifyManager.cancel(notifyID);
@@ -261,9 +268,9 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         // setup the ultra-pretty toolbar combo:
         Toolbar actionBar = (Toolbar) findViewById(R.id.toolbarActionBar);
         actionBar.setTitleTextColor(getResources().getColor(R.color.actionBarTextColor));
-        actionBar.setTitle("Chameleon USB Interface Library");
+        actionBar.setTitle("Chameleon USB");
         actionBar.setSubtitleTextColor(getResources().getColor(R.color.actionBarTextColor));
-        actionBar.setSubtitle("Bread Company Demo Application v" + BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")");
+        actionBar.setSubtitle("Demo Application v" + BuildConfig.VERSION_NAME + "(" + BuildConfig.VERSION_CODE + ")");
         actionBar.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         Drawable toolbarLogo = getResources().getDrawable(R.drawable.chameleonusb64);
         toolbarLogo.setAlpha(127);
@@ -306,7 +313,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO);
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
-            LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
+            LibraryLogging.i(TAG, Utils.stringJoin("\n", getChameleonMiniUSBDeviceParams()));
         }
         else {
             LibraryLogging.i(TAG, "Unable to connect to chameleon device :(");
@@ -529,7 +536,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     public void actionButtonInitUSB(View button) {
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
-            LibraryLogging.i(TAG, String.join("\n", getChameleonMiniUSBDeviceParams()));
+            LibraryLogging.i(TAG, Utils.stringJoin("\n", getChameleonMiniUSBDeviceParams()));
         }
         else {
             LibraryLogging.i(TAG, "Unable to initialize the Chameleon Mini device. :(");
@@ -548,7 +555,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             return;
         }
         String[] deviceSettings = getChameleonMiniUSBDeviceParams();
-        LibraryLogging.i(TAG, String.join("\n", deviceSettings));
+        LibraryLogging.i(TAG, Utils.stringJoin("\n", deviceSettings));
     }
 
     public void actionButtonRandomUID(View button) {

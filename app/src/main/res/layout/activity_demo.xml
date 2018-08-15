@@ -73,44 +73,52 @@
                 android:paddingLeft="3dp"
                 android:src="@drawable/chameleonstatusmarker16" />
 
-            <ImageView
-                android:id="@+id/statusIconRevE"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:paddingRight="2dp"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/reveboard24" />
+            <GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/statusIconRevG"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:paddingRight="2dp"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/revgboard24" />
+                <ImageView
+                    android:id="@+id/statusIconRevE"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="2dp"
+                    android:src="@drawable/reveboard24" />
 
-            <ImageView
-                android:id="@+id/statusIconCardDumpDownload"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:paddingRight="2dp"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/downloadstatusicon16" />
+                <ImageView
+                    android:id="@+id/statusIconRevG"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="2dp"
+                    android:src="@drawable/revgboard24" />
 
-            <ImageView
-                android:id="@+id/statusIconCardDumpUpload"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:paddingRight="2dp"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/uploadstatusicon16" />
+                <ImageView
+                    android:id="@+id/statusIconCardDumpDownload"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="2dp"
+                    android:src="@drawable/downloadstatusicon16" />
+
+                <ImageView
+                    android:id="@+id/statusIconCardDumpUpload"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="2dp"
+                    android:src="@drawable/uploadstatusicon16" />
+
+            </GridLayout>
 
         </GridLayout>
 
         <View
             android:layout_width="3dp"
             android:layout_height="55dp"
-            android:layout_marginLeft="20dp"
+            android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
             android:layout_gravity="center_vertical|center"
             android:background="@color/colorPrimaryDark" />
@@ -233,7 +241,9 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_margin="1dp"
+        android:padding="1dp">
 
         <GridLayout
             android:layout_width="match_parent"
@@ -357,7 +367,9 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:columnCount="3"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:layout_margin="1dp"
+        android:padding="1dp">
 
         <Button
             style="@style/GridButtons"
@@ -393,7 +405,7 @@
             style="@style/GridButtons"
             android:drawableLeft="@drawable/downloadviaxmodem24"
             android:onClick="actionButtonDownloadByXModem"
-            android:text="DOWNLOAD BIN" />
+            android:text="DLD BIN" />
 
         <Button
             style="@style/GridButtons"
@@ -411,25 +423,7 @@
             style="@style/GridButtons"
             android:drawableLeft="@drawable/lock24"
             android:onClick="actionButtonSetReadonly"
-            android:text="Toggle Readonly" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/blankchip24"
-            android:onClick="actionButtonSetConfiguration"
-            android:text="MFU" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/brainchip"
-            android:onClick="actionButtonSetConfiguration"
-            android:text="MFC1K" />
-
-        <Button
-            style="@style/GridButtons"
-            android:drawableLeft="@drawable/chip24v3"
-            android:onClick="actionButtonSetConfiguration"
-            android:text="MFC4K" />
+            android:text="RO / RW" />
 
     </GridLayout>
 

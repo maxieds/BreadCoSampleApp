@@ -14,13 +14,13 @@
     </string-array>
 
     <integer-array name="sampleCardDumpFiles">
-        <item>@raw/carddump_mifare_sample_v1</item>
-        <item>@raw/carddump_mifare_sample_v2</item>
-        <item>@raw/carddump_mifare_sample_v3</item>
-        <item>@raw/mfc1k_random_content_fixed_keys</item>
-        <item>@raw/mfc4k_random_content_fixed_keys</item>
-        <item>@raw/mifare_classic_1k</item>
-        <item>@raw/mifare_ultralight</item>
+        <item>@raw/mifare_v1</item>
+        <item>@raw/mifare_v2</item>
+        <item>@raw/mifare_v3</item>
+        <item>@raw/mfc1k_rcfk</item>
+        <item>@raw/mfc4k_rcfk</item>
+        <item>@raw/mfc1k</item>
+        <item>@raw/mfu</item>
     </integer-array>
 
     <string-array name="sampleCardDumpConfigTypes">
@@ -34,7 +34,7 @@
     </string-array>
 
     <string-array name="loggingLevels">
-        <item>--Logging Level--</item>
+        <item>--Logs--</item>
         <item>OFF</item>
         <item>INFO</item>
         <item>WARN</item>
