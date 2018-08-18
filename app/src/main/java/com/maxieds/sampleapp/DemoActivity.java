@@ -421,19 +421,30 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         try {
             LibraryLogging.i(TAG, "Card Image \"" + dumpImageRawFilename + "\" of size " + dumpIStream.available() + "B ready for upload.");
         } catch(Exception ioe) {}
-        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream)) {
-            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
-            Intent successIntent = new Intent("CHAMELEON_UPLOAD_SUCCESS");
-            successIntent.putExtra("ChameleonConfig", dumpImageFormat);
-            sendBroadcast(successIntent);
-        }
-        else {
-            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
-            sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
-        }
-        disableStatusIcon(R.id.statusIconCardDumpUpload);
-        setUpdateStatusBar(true);
-        updateDemoWindowStatusBar();
+        final InputStream uploadIStream = dumpIStream;
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                DemoActivity.localInst.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(uploadIStream)) {
+                            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
+                            Intent successIntent = new Intent("CHAMELEON_UPLOAD_SUCCESS");
+                            successIntent.putExtra("ChameleonConfig", dumpImageFormat);
+                            sendBroadcast(successIntent);
+                        }
+                        else {
+                            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
+                            sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
+                        }
+                        disableStatusIcon(R.id.statusIconCardDumpUpload);
+                        setUpdateStatusBar(true);
+                        updateDemoWindowStatusBar();
+                    }
+                });
+            }
+        });
 
     }
 
@@ -462,20 +473,31 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             setUpdateStatusBar(true);
             return;
         }
-        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonDownload(binaryDumpFile)) {
-            Intent downloadSuccessIntent = new Intent("CHAMELEON_DOWNLOAD_SUCCESS");
-            downloadSuccessIntent.putExtra("FilePath", binaryDumpFile.getAbsolutePath());
-            sendBroadcast(downloadSuccessIntent);
-            Log.i(TAG, "Successfully downloaded binary card dump to file.");
-        }
-        else {
-            Intent downloadFailureIntent = new Intent("CHAMELEON_DOWNLOAD_FAILURE");
-            sendBroadcast(downloadFailureIntent);
-            Log.i(TAG, "Failed to download binary card dump to file.");
-        }
-        disableStatusIcon(R.id.statusIconCardDumpDownload);
-        setUpdateStatusBar(true);
-        updateDemoWindowStatusBar();
+        final File downloadFile = binaryDumpFile;
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                DemoActivity.localInst.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonDownload(downloadFile)) {
+                            Intent downloadSuccessIntent = new Intent("CHAMELEON_DOWNLOAD_SUCCESS");
+                            downloadSuccessIntent.putExtra("FilePath", downloadFile.getAbsolutePath());
+                            sendBroadcast(downloadSuccessIntent);
+                            Log.i(TAG, "Successfully downloaded binary card dump to file.");
+                        }
+                        else {
+                            Intent downloadFailureIntent = new Intent("CHAMELEON_DOWNLOAD_FAILURE");
+                            sendBroadcast(downloadFailureIntent);
+                            Log.i(TAG, "Failed to download binary card dump to file.");
+                        }
+                        disableStatusIcon(R.id.statusIconCardDumpDownload);
+                        setUpdateStatusBar(true);
+                        updateDemoWindowStatusBar();
+                    }
+                });
+            }
+        });
 
     }
 
