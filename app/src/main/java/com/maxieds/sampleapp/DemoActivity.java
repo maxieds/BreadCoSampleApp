@@ -75,8 +75,8 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
     public static final String PACKAGE_NOTIFY_CHANNELID = "com.maxieds.sampleapp:Channel_01";
     public static final int DEMO_ACTIVITY_NOTIFY_ID = 1;
 
-    public static final int SHORT_PAUSE = 25;
-    public static final int MEDIUM_PAUSE = 1250;
+    public static final int SHORT_PAUSE = ChameleonDeviceConfig.SHORT_PAUSE;
+    public static final int MEDIUM_PAUSE = ChameleonDeviceConfig.MEDIUM_PAUSE;
     public static final int REDUCED_CMD_TIMEOUT = 500;
 
     public static final String[] intentBroadcastTypes = new String[] {
@@ -421,40 +421,19 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         try {
             LibraryLogging.i(TAG, "Card Image \"" + dumpImageRawFilename + "\" of size " + dumpIStream.available() + "B ready for upload.");
         } catch(Exception ioe) {}
-
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream);
-                while(!XModem.EOT) {
-                    try {
-                        Thread.sleep(2 * SHORT_PAUSE);
-                    } catch(InterruptedException ie) {
-                        break;
-                    }
-                }
-                try {
-                    Thread.sleep(MEDIUM_PAUSE);
-                } catch(InterruptedException ie) {}
-                DemoActivity.localInst.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.verifyChameleonUpload(dumpIStream)) {
-                            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
-                            Intent successIntent = new Intent("CHAMELEON_UPLOAD_SUCCESS");
-                            successIntent.putExtra("ChameleonConfig", dumpImageFormat);
-                            sendBroadcast(successIntent);
-                        } else {
-                            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
-                            sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
-                        }
-                        disableStatusIcon(R.id.statusIconCardDumpUpload);
-                        setUpdateStatusBar(true);
-                        updateDemoWindowStatusBar();
-                    }
-                });
-            }
-        });
+        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonUpload(dumpIStream)) {
+            LibraryLogging.i(TAG, "Successfully uploaded card image! :)");
+            Intent successIntent = new Intent("CHAMELEON_UPLOAD_SUCCESS");
+            successIntent.putExtra("ChameleonConfig", dumpImageFormat);
+            sendBroadcast(successIntent);
+        }
+        else {
+            LibraryLogging.i(TAG, "Upload operation failed for card image... :(");
+            sendBroadcast(new Intent("CHAMELEON_UPLOAD_FAILURE"));
+        }
+        disableStatusIcon(R.id.statusIconCardDumpUpload);
+        setUpdateStatusBar(true);
+        updateDemoWindowStatusBar();
 
     }
 
@@ -483,43 +462,20 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
             setUpdateStatusBar(true);
             return;
         }
-
-        final File binaryDumpFileFinal = binaryDumpFile;
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonDownload(binaryDumpFileFinal);
-                while(!XModem.EOT) {
-                    try {
-                        Thread.sleep(2 * SHORT_PAUSE);
-                    } catch(InterruptedException ie) {
-                        break;
-                    }
-                }
-                try {
-                    Thread.sleep(MEDIUM_PAUSE);
-                } catch(InterruptedException ie) {}
-                DemoActivity.localInst.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(!XModem.transmissionError()) {
-                            Intent downloadSuccessIntent = new Intent("CHAMELEON_DOWNLOAD_SUCCESS");
-                            downloadSuccessIntent.putExtra("FilePath", binaryDumpFileFinal.getAbsolutePath());
-                            sendBroadcast(downloadSuccessIntent);
-                            Log.i(TAG, "Successfully downloaded binary card dump to file.");
-                        }
-                        else {
-                            Intent downloadFailureIntent = new Intent("CHAMELEON_DOWNLOAD_FAILURE");
-                            sendBroadcast(downloadFailureIntent);
-                            Log.i(TAG, "Failed to download binary card dump to file.");
-                        }
-                        disableStatusIcon(R.id.statusIconCardDumpDownload);
-                        setUpdateStatusBar(true);
-                        updateDemoWindowStatusBar();
-                    }
-                });
-            }
-        });
+        if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonDownload(binaryDumpFile)) {
+            Intent downloadSuccessIntent = new Intent("CHAMELEON_DOWNLOAD_SUCCESS");
+            downloadSuccessIntent.putExtra("FilePath", binaryDumpFile.getAbsolutePath());
+            sendBroadcast(downloadSuccessIntent);
+            Log.i(TAG, "Successfully downloaded binary card dump to file.");
+        }
+        else {
+            Intent downloadFailureIntent = new Intent("CHAMELEON_DOWNLOAD_FAILURE");
+            sendBroadcast(downloadFailureIntent);
+            Log.i(TAG, "Failed to download binary card dump to file.");
+        }
+        disableStatusIcon(R.id.statusIconCardDumpDownload);
+        setUpdateStatusBar(true);
+        updateDemoWindowStatusBar();
 
     }
 
