@@ -5,7 +5,7 @@ android {
     defaultConfig {
         applicationId "com.maxieds.sampleapp"
         minSdkVersion 25
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode 5
         versionName "1.4"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -26,7 +26,8 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation project(":chameleonminiusb")
+    //implementation project(":chameleonminiusb")
+    implementation 'com.github.maxieds:ChameleonMiniUSBInterface:BreadCoStable-2018-09-06'
 }
 
 apply plugin: 'maven'
