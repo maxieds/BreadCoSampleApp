@@ -38,7 +38,7 @@ import com.maxieds.chameleonminiusb.ChameleonCommands;
 import com.maxieds.chameleonminiusb.ChameleonDeviceConfig;
 import com.maxieds.chameleonminiusb.LibraryLogging;
 import com.maxieds.chameleonminiusb.Utils;
-import com.maxieds.chameleonminiusb.ChameleonLibraryLoggingReceiver;
+import com.maxieds.chameleonminiusb.ChameleonLibraryInterfaceReceiver;
 import com.maxieds.chameleonminiusb.XModem;
 
 import java.io.File;
@@ -68,7 +68,7 @@ import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_VERBOSE;
 import static com.maxieds.chameleonminiusb.LibraryLogging.LocalLoggingLevel.LOG_ADB_WARN;
 
-public class DemoActivity extends AppCompatActivity implements ChameleonLibraryLoggingReceiver {
+public class DemoActivity extends AppCompatActivity implements ChameleonLibraryInterfaceReceiver {
 
     private static final String TAG = DemoActivity.class.getSimpleName();
 
@@ -181,6 +181,18 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
                 }
             }, SHORT_PAUSE);
         }
+    }
+
+    public Context getDefaultContext() {
+        return (Context) this;
+    }
+
+    public void getRunOnUiThreadHandler(Runnable postRunnableParam) {
+        runOnUiThread(postRunnableParam);
+    }
+
+    public void getRequestPermissionsHandler(String[] permissions, int requestCode) {
+        requestPermissions(permissions, requestCode);
     }
 
     private boolean postSystemNotificationIcon(int notifyID, String notifyName, int drawableResID, String notifyAppDesc,
@@ -310,7 +322,7 @@ public class DemoActivity extends AppCompatActivity implements ChameleonLibraryL
         }
 
         // initialize the Chameleon USB library so it gets up and a' chugging:
-        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize(this, LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO);
+        (new ChameleonDeviceConfig()).chameleonUSBInterfaceInitialize((ChameleonLibraryInterfaceReceiver) this, LibraryLogging.LocalLoggingLevel.LOG_ADB_INFO);
         if(ChameleonDeviceConfig.THE_CHAMELEON_DEVICE.chameleonPresent()) {
             LibraryLogging.i(TAG, "The chameleon device is connected! :)");
             LibraryLogging.i(TAG, Utils.stringJoin("\n", getChameleonMiniUSBDeviceParams()));
